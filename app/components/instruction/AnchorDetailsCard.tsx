@@ -12,6 +12,8 @@ import { camelToTitleCase } from '@utils/index';
 import { useMemo } from 'react';
 
 import { InstructionCard } from './InstructionCard';
+import {useTransactionDetails} from "@providers/transactions/parsed";
+import {signature} from "@solana/web3.js/src/layout";
 
 export default function AnchorDetailsCard(props: {
     ix: TransactionInstruction;
@@ -30,12 +32,28 @@ export default function AnchorDetailsCard(props: {
 
     return (
         <InstructionCard title={cardTitle} {...props}>
-            <AnchorDetails ix={ix} anchorProgram={anchorProgram} />
+            <AnchorDetails ix={ix} signature={props.signature} anchorProgram={anchorProgram}/>
         </InstructionCard>
     );
 }
 
-function AnchorDetails({ ix, anchorProgram }: { ix: TransactionInstruction; anchorProgram: Program }) {
+function AnchorDetails({ix, anchorProgram, signature}: {
+    ix: TransactionInstruction;
+    anchorProgram: Program,
+    signature: string
+}) {
+    const details = useTransactionDetails(signature);
+
+    const transactionWithMeta = details?.data?.transactionWithMeta;
+    const accountSources: Record<string, string> = {};
+    if (transactionWithMeta) {
+        const {message} = transactionWithMeta.transaction;
+        message.accountKeys.map((account) => {
+            accountSources[account.pubkey.toBase58()] = account.source || 'Unknown Source';
+        });
+    }
+
+
     const { ixAccounts, decodedIxData, ixDef } = useMemo(() => {
         let ixAccounts:
             | {
@@ -104,6 +122,8 @@ function AnchorDetails({ ix, anchorProgram }: { ix: TransactionInstruction; anch
                             </div>
                             {isWritable && <span className="badge bg-info-soft me-1">Writable</span>}
                             {isSigner && <span className="badge bg-info-soft me-1">Signer</span>}
+                            {accountSources[pubkey.toBase58()] == 'lookupTable' &&
+                                <span className="badge bg-info-soft me-1">Lookup Table</span>}
                         </td>
                         <td className="text-lg-end" colSpan={2}>
                             <Address pubkey={pubkey} alignRight link />

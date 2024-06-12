@@ -11,7 +11,7 @@ import { ChevronDown, ChevronUp, CornerDownRight } from 'react-feather';
 import ReactJson from 'react-json-view';
 
 export function getAnchorProgramName(program: Program | null): string | undefined {
-    return program ? snakeToTitleCase(program.idl.name) : undefined;
+    return program ? snakeToTitleCase(program.idl.metadata.name) : undefined;
 }
 
 export function AnchorProgramName({
